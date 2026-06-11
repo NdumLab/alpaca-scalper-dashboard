@@ -1,0 +1,105 @@
+# ============================================================
+# Alpaca Scalping Bot — Configuration
+# ============================================================
+
+alpaca:
+  # NEVER hardcode keys here in production — use env vars:
+  #   export APCA_API_KEY_ID="..."
+  #   export APCA_API_SECRET_KEY="..."
+  paper: true                # START IN PAPER. Flip to false only after weeks of profitable paper results.
+
+account:
+  starting_equity: 2000      # informational; bot reads live equity from the API
+  account_type: margin       # "margin" or "cash" — affects PDT handling below
+
+# ------------------------------------------------------------
+# Universe — liquid, tight-spread symbols only.
+# Scalping illiquid names with $2k is how accounts die.
+# ------------------------------------------------------------
+symbols:
+  - SPY
+  - QQQ
+  - AAPL
+  - NVDA
+  - AMD
+  - TSLA
+
+# ------------------------------------------------------------
+# Strategy: 1-minute momentum scalp
+#   Long when: EMA(fast) crosses above EMA(slow)
+#              AND price > VWAP
+#              AND volume surge vs recent average
+#   Exit via bracket order (take-profit + stop-loss)
+# ------------------------------------------------------------
+strategy:
+  bar_minutes: 15            # operate on 15-min bars (1-min aggregated live; round-4 research)
+  timeframe_minutes: 1
+  ema_fast: 9
+  ema_slow: 21
+  rsi_period: 14
+  rsi_max_entry: 70          # don't chase overbought
+  volume_lookback: 20
+  volume_surge_mult: 2.0     # vs PREVIOUS avg; tuned for 15-min bars (plateau 1.5-2.0, both all-folds+)
+  cross_confirm_bars: 3      # VWAP/volume/RSI may confirm up to 3 bars after the cross
+  atr_period: 14
+  warmup_bars: 30            # bars needed before signals are valid
+
+  # Profit-push filters. These try to improve trade quality instead of just
+  # increasing trade count. Set any numeric filter to 0 to disable it.
+  min_atr_pct: 0             # DISABLED: filter pack failed OOS (see RESEARCH.md round 2)
+  max_atr_pct: 0             # DISABLED: failed OOS validation
+  min_ema_spread_atr: 0      # DISABLED: failed OOS validation
+  max_vwap_distance_atr: 0   # DISABLED: failed OOS validation
+  blocked_time_ranges: []    # 11:00-12:00 block was IS-overfit; failed OOS
+  allowed_weekdays: [0, 1, 2, 3, 4]  # Mon=0 ... Fri=4
+
+  allow_shorts: false        # keep it simple/safer to start
+
+  # Session filters (US/Eastern)
+  skip_first_minutes: 5      # opening chaos = bad fills
+  flatten_at: "15:55"        # close everything before the bell, no overnight risk
+  no_new_entries_after: "15:30"
+
+# ------------------------------------------------------------
+# Risk — these settings keep you alive. Do not loosen them
+# until you have months of data saying you should.
+# ------------------------------------------------------------
+execution:
+  entry_limit_offset_cents: 3 # cap entry slippage tighter than the old hardcoded 5c
+
+risk:
+  risk_per_trade_pct: 10.0   # % of equity risked per trade; NOTE: 90% position cap binds on most trades at this level
+  max_position_pct: 90       # max % of buying power in one position
+  stop_atr_mult: 3.5         # extra-wide stop for 15-min bar noise (round-6; 4.5 breaks fold consistency)
+  take_profit_r: 2.0         # 2R target (round-6: retuned FOR 15-min bars; 1-min legacy was 3R)
+  max_daily_loss_pct: 5.0    # hard kill switch for the day (~$100 on $2k; allows ~2 full stop-outs at 10% risk)
+  max_daily_trades: 6        # pure risk control now (no regulatory cap)
+  max_concurrent_positions: 1
+  cooldown_minutes_after_loss: 10
+
+# ------------------------------------------------------------
+# PDT (Pattern Day Trader) — RETIRED June 4, 2026
+# FINRA eliminated the PDT framework (SEC-approved amendment to
+# Rule 4210). Alpaca adopted the new Intraday Margin Framework on
+# 2026-06-04: no day-trade counting, no $25k minimum, no 90-day
+# freezes. Buying power is now governed by real-time intraday
+# margin excess. The tracker below is kept as an OPTIONAL
+# self-discipline tool only — off by default.
+# ------------------------------------------------------------
+pdt:
+  enforce: false              # regulatory cap no longer exists
+  max_day_trades_per_5_days: 3   # only used if enforce: true
+
+# ------------------------------------------------------------
+# Backtest realism — applied only in backtest.py / report.py.
+# Market orders (entry, stop-out, flatten) fill against you by
+# slippage_cents per share. Take-profit is a limit order and
+# fills at its price (no slippage). 2c is reasonable for
+# SPY/QQQ-class liquidity; thinner names deserve more.
+# ------------------------------------------------------------
+backtest:
+  slippage_cents: 2          # start with 2c; re-run at 3c/5c for stress testing
+
+logging:
+  level: INFO
+  trade_log: trades.csv

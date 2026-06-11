@@ -1,0 +1,41 @@
+# Secrets
+.env
+*.pem
+*.key
+*.secret
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Runtime data
+logs/
+results/
+trade_journal.csv
+
+# Backups
+config.yaml.before-*
+*.bak
+*.tmp
+
+# Packages
+*.zip
+*.tar.gz
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Runtime state/log files
+bot.log
+bot_state.json
+*.log
+
+# Generated research output
+sweep_rev.json
+optimized_config.yaml

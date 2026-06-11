@@ -1,0 +1,32 @@
+services:
+  alpaca-bot:
+    build: .
+    container_name: alpaca-scalper
+    env_file:
+      - .env
+    environment:
+      TZ: America/New_York
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./logs:/app/logs
+      - ./results:/app/results
+      - ./trade_journal.csv:/app/trade_journal.csv
+    restart: unless-stopped
+    command: ["python", "main.py"]
+
+  bot-status:
+    build: .
+    profiles:
+      - tools
+    env_file:
+      - .env
+    environment:
+      TZ: America/New_York
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./logs:/app/logs
+      - ./results:/app/results
+      - ./trade_journal.csv:/app/trade_journal.csv
+    command: ["python", "bot_status.py"]

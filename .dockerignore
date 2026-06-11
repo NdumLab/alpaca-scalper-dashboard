@@ -1,0 +1,13 @@
+.env
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+logs
+results
+trade_journal.csv
+*.zip
+config.yaml.before-*

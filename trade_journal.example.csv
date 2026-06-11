@@ -1,0 +1,1 @@
+synced_at,order_id,parent_order_id,client_order_id,symbol,side,order_type,order_class,status,time_in_force,submitted_at,filled_at,filled_qty,filled_avg_price,limit_price,stop_price,take_profit_limit_price,stop_loss_stop_price,notional,realized_pnl_est

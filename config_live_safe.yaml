@@ -1,0 +1,74 @@
+alpaca:
+  paper: true
+account:
+  starting_equity: 2000
+  account_type: margin
+symbols:
+- SPY
+- QQQ
+- IWM
+- AAPL
+- MSFT
+- AMZN
+- META
+- NVDA
+- AMD
+- TSLA
+- SMH
+strategy:
+  bar_minutes: 15
+  timeframe_minutes: 1
+  ema_fast: 9
+  ema_slow: 21
+  rsi_period: 14
+  rsi_max_entry: 72
+  volume_lookback: 20
+  volume_surge_mult: 1.8
+  cross_confirm_bars: 3
+  atr_period: 14
+  warmup_bars: 30
+  min_atr_pct: 0
+  max_atr_pct: 0
+  min_ema_spread_atr: 0
+  max_vwap_distance_atr: 0
+  blocked_time_ranges: []
+  allowed_weekdays:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  allow_shorts: false
+  skip_first_minutes: 5
+  flatten_at: '15:55'
+  no_new_entries_after: '15:35'
+  mode: ensemble
+  ensemble_modes:
+  - orb
+  - momentum
+  orb_minutes: 30
+  orb_vol_mult: 1.6
+  orb_rsi_max_entry: 76
+  orb_max_vwap_distance_atr: 2.2
+  trend_ema: 0
+  vwap_dev_atr: 1.7
+  rsi_min_entry: 35
+execution:
+  entry_limit_offset_cents: 3
+risk:
+  risk_per_trade_pct: 2.0
+  max_position_pct: 40
+  stop_atr_mult: 3.2
+  take_profit_r: 2.2
+  max_daily_loss_pct: 2.0
+  max_daily_trades: 3
+  max_concurrent_positions: 1
+  cooldown_minutes_after_loss: 10
+pdt:
+  enforce: false
+  max_day_trades_per_5_days: 3
+backtest:
+  slippage_cents: 5
+logging:
+  level: INFO
+  trade_log: trades.csv
