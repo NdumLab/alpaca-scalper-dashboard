@@ -17,11 +17,12 @@ import json
 import logging
 import os
 from datetime import datetime, date, timedelta
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 log = logging.getLogger("risk")
 
-STATE_FILE = "bot_state.json"
+STATE_FILE = os.environ.get("STATE_PATH", "bot_state.json")
 ET = ZoneInfo("America/New_York")
 
 
@@ -33,7 +34,7 @@ class RiskManager:
     def __init__(self, cfg: dict):
         self.cfg = cfg["risk"]
         self.pdt_cfg = cfg["pdt"]
-        self.trade_log = cfg["logging"]["trade_log"]
+        self.trade_log = os.environ.get("TRADE_LOG_PATH", cfg["logging"]["trade_log"])
         self.day_trades: list[str] = []      # ISO dates of completed day trades
         self.daily_pnl = 0.0
         self.daily_trade_count = 0
@@ -59,6 +60,7 @@ class RiskManager:
         self._prune_day_trades()
 
     def _save_state(self):
+        Path(STATE_FILE).parent.mkdir(parents=True, exist_ok=True)
         with open(STATE_FILE, "w") as f:
             json.dump({
                 "day_trades": self.day_trades,
@@ -154,6 +156,7 @@ class RiskManager:
 
     # ---------------- trade log ----------------
     def log_trade(self, row: dict):
+        Path(self.trade_log).parent.mkdir(parents=True, exist_ok=True)
         exists = os.path.exists(self.trade_log)
         with open(self.trade_log, "a", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(row.keys()))

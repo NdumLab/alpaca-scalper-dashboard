@@ -8,6 +8,10 @@ __pycache__
 .gitignore
 logs
 results
+runtime
 trade_journal.csv
+trades.csv
+bot.log
+bot_state.json
 *.zip
 config.yaml.before-*

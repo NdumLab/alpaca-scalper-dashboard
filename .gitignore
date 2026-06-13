@@ -15,7 +15,9 @@ __pycache__/
 # Runtime data
 logs/
 results/
+runtime/
 trade_journal.csv
+trades.csv
 
 # Backups
 config.yaml.before-*

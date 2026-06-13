@@ -47,28 +47,28 @@ strategy:
   - orb
   - momentum
   orb_minutes: 30
-  orb_vol_mult: 1.8
+  orb_vol_mult: 1.6
   orb_rsi_max_entry: 76
-  orb_max_vwap_distance_atr: 1.8
+  orb_max_vwap_distance_atr: 2.2
   trend_ema: 0
   vwap_dev_atr: 1.7
   rsi_min_entry: 35
 execution:
   entry_limit_offset_cents: 3
 risk:
-  risk_per_trade_pct: 10.0
-  max_position_pct: 180
-  stop_atr_mult: 3.4
-  take_profit_r: 3.0
-  max_daily_loss_pct: 5.0
-  max_daily_trades: 8
+  risk_per_trade_pct: 2.0
+  max_position_pct: 40
+  stop_atr_mult: 3.2
+  take_profit_r: 2.2
+  max_daily_loss_pct: 2.0
+  max_daily_trades: 3
   max_concurrent_positions: 1
   cooldown_minutes_after_loss: 10
 pdt:
   enforce: false
   max_day_trades_per_5_days: 3
 backtest:
-  slippage_cents: 3
+  slippage_cents: 5
 logging:
   level: INFO
   trade_log: trades.csv

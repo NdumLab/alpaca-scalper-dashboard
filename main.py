@@ -13,10 +13,12 @@ Architecture:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import sys
-from datetime import datetime, timedelta, time as dtime
+from datetime import datetime, timedelta, timezone, time as dtime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -31,11 +33,17 @@ from risk import RiskManager
 from execution import Executor
 
 ET = ZoneInfo("America/New_York")
+RUNTIME_DIR = Path(os.environ.get("RUNTIME_DIR", "runtime"))
+HEARTBEAT_FILE = RUNTIME_DIR / "heartbeat.json"
+PAUSE_FILE = RUNTIME_DIR / "paused"
+RESTART_FILE = RUNTIME_DIR / "restart_requested"
+LOG_FILE = Path(os.environ.get("LOG_PATH", "bot.log"))
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)-7s %(name)-8s %(message)s",
-    handlers=[logging.StreamHandler(), logging.FileHandler("bot.log")],
+    handlers=[logging.StreamHandler(), logging.FileHandler(LOG_FILE)],
 )
 log = logging.getLogger("main")
 
@@ -75,6 +83,7 @@ class ScalpBot:
         self.flatten_at = dtime.fromisoformat(scfg["flatten_at"])
         self.no_new_after = dtime.fromisoformat(scfg["no_new_entries_after"])
         self.skip_first = scfg["skip_first_minutes"]
+        RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
 
     # ---------------- session helpers ----------------
     def now_et(self) -> datetime:
@@ -90,6 +99,37 @@ class ScalpBot:
 
     def past_flatten_time(self) -> bool:
         return self.now_et().time() >= self.flatten_at
+
+    def is_paused(self) -> bool:
+        return PAUSE_FILE.exists()
+
+    def check_restart_requested(self):
+        if RESTART_FILE.exists():
+            try:
+                RESTART_FILE.unlink()
+            except OSError:
+                pass
+            log.warning("Dashboard restart requested — exiting for Compose restart.")
+            sys.exit(0)
+
+    def write_heartbeat(self, status: str = "running"):
+        payload = {
+            "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "time_et": self.now_et().isoformat(timespec="seconds"),
+            "status": status,
+            "paused": self.is_paused(),
+            "mode": "paper" if self.cfg["alpaca"]["paper"] else "live",
+            "symbols": self.symbols,
+        }
+        tmp = HEARTBEAT_FILE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        tmp.replace(HEARTBEAT_FILE)
+
+    async def heartbeat_loop(self):
+        while True:
+            self.check_restart_requested()
+            self.write_heartbeat("paused" if self.is_paused() else "running")
+            await asyncio.sleep(15)
 
     def refresh_session_if_needed(self):
         """Reset once per New York trading date if the bot runs overnight."""
@@ -205,6 +245,8 @@ class ScalpBot:
         return out
 
     async def on_bar(self, bar):
+        self.check_restart_requested()
+        self.write_heartbeat("paused" if self.is_paused() else "running")
         self.refresh_session_if_needed()
         symbol = bar.symbol
 
@@ -227,6 +269,9 @@ class ScalpBot:
             ind.vwap.reset()
 
         ind.update(b)
+
+        if self.is_paused():
+            return
 
         if not self.in_entry_window():
             return
@@ -347,6 +392,7 @@ class ScalpBot:
         self.trade_stream.subscribe_trade_updates(self.on_trade_update)
 
         await asyncio.gather(
+            self.heartbeat_loop(),
             self.data_stream._run_forever(),
             self.trade_stream._run_forever(),
         )

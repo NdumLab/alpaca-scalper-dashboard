@@ -7,11 +7,15 @@ services:
     environment:
       TZ: America/New_York
       PYTHONUNBUFFERED: "1"
+      RUNTIME_DIR: /app/runtime
+      STATE_PATH: /app/runtime/bot_state.json
+      LOG_PATH: /app/runtime/bot.log
+      TRADE_LOG_PATH: /app/runtime/trades.csv
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./logs:/app/logs
       - ./results:/app/results
-      - ./trade_journal.csv:/app/trade_journal.csv
+      - ./runtime:/app/runtime
     restart: unless-stopped
     command: ["python", "main.py"]
 
@@ -28,5 +32,26 @@ services:
       - ./config.yaml:/app/config.yaml:ro
       - ./logs:/app/logs
       - ./results:/app/results
-      - ./trade_journal.csv:/app/trade_journal.csv
-    command: ["python", "bot_status.py"]
+      - ./runtime:/app/runtime
+    command: ["python", "bot_status.py", "--journal", "/app/runtime/trade_journal.csv"]
+
+  dashboard:
+    build: .
+    container_name: alpaca-scalper-dashboard
+    env_file:
+      - .env
+    environment:
+      TZ: America/New_York
+      PYTHONUNBUFFERED: "1"
+      DASHBOARD_PORT: "8080"
+      RUNTIME_DIR: /app/runtime
+      JOURNAL_PATH: /app/runtime/trade_journal.csv
+      STATE_PATH: /app/runtime/bot_state.json
+      LOG_PATH: /app/runtime/bot.log
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./runtime:/app/runtime
+    restart: unless-stopped
+    command: ["python", "dashboard.py"]
