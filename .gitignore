@@ -41,3 +41,4 @@ bot_state.json
 # Generated research output
 sweep_rev.json
 optimized_config.yaml
+*.pkl

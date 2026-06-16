@@ -70,7 +70,9 @@ def simulate(cfg: dict, events: list, symbols: list[str]) -> dict:
     rcfg = cfg["risk"]
     scfg = cfg["strategy"]
     pdt_max = cfg["pdt"]["max_day_trades_per_5_days"]
-    slip = cfg.get("backtest", {}).get("slippage_cents", 0) / 100.0
+    bcfg = cfg.get("backtest", {})
+    slip = bcfg.get("slippage_cents", 0) / 100.0
+    tp_haircut = bcfg.get("take_profit_haircut_cents", 0) / 100.0
 
     equity = float(cfg["account"]["starting_equity"])
     start_equity = equity
@@ -109,6 +111,7 @@ def simulate(cfg: dict, events: list, symbols: list[str]) -> dict:
 
         if position and position["symbol"] == sym:
             exit_price = None
+            exit_reason = None
             position["bars_held"] = position.get("bars_held", 0) + 1
             trail_m = rcfg.get("trail_atr_mult", 0) or 0
             tstop = rcfg.get("time_stop_bars", 0) or 0
@@ -122,12 +125,16 @@ def simulate(cfg: dict, events: list, symbols: list[str]) -> dict:
                                            round(bar.close - trail_m * ind.atr.value, 2))
             if bar.low <= position["stop"]:
                 exit_price = position["stop"] - slip   # stop-market: slips against you
+                exit_reason = "stop"
             elif bar.high >= position["tp"]:
-                exit_price = position["tp"]            # limit: fills at price or better
+                exit_price = position["tp"] - tp_haircut
+                exit_reason = "take_profit"
             elif t >= flatten_at:
                 exit_price = bar.close - slip          # market flatten
+                exit_reason = "flatten"
             elif tstop and position["bars_held"] >= tstop:
                 exit_price = bar.close - slip          # time stop: dead trade
+                exit_reason = "time_stop"
             if exit_price is not None:
                 pnl = (exit_price - position["entry"]) * position["qty"]
                 equity += pnl
@@ -138,6 +145,7 @@ def simulate(cfg: dict, events: list, symbols: list[str]) -> dict:
                 trades.append({"date": d, "symbol": sym, "pnl": pnl,
                                "entry": position["entry"], "exit": exit_price,
                                "qty": position["qty"],
+                               "exit_reason": exit_reason,
                                "entry_hour": position.get("entry_hour"),
                                "reason": position.get("reason", "")})
                 position = None

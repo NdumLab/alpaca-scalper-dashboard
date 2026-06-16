@@ -112,6 +112,17 @@ docker compose --profile tools run --rm bot-status
 
 Runtime files are written under `runtime/` and are intentionally ignored by git.
 
+## Run On AWS EC2
+
+Use the EC2 deployment guide:
+
+```text
+AWS_EC2_DEPLOY.md
+```
+
+The AWS setup keeps the dashboard bound to `127.0.0.1` on the instance and uses
+an SSH tunnel for browser access.
+
 ## Dashboard Controls
 
 The dashboard refuses to run against a live Alpaca config. It supports:
