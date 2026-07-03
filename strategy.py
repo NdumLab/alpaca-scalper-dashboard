@@ -56,12 +56,13 @@ class ScalpStrategy:
                 return False
         return True
 
-    def evaluate(self, symbol: str, bar: Bar, ind: SymbolIndicators) -> Signal | None:
+    def evaluate(self, symbol: str, bar: Bar, ind: SymbolIndicators,
+                 mode_override: str | None = None) -> Signal | None:
         c = self.cfg
         if not self._time_allowed(bar):
             return None
 
-        mode = c.get("mode", "momentum")
+        mode = mode_override or c.get("mode", "momentum")
         if mode == "ensemble":
             # Try setup families in priority order.  A conservative default is
             # ORB first, then momentum, because ORB only has one shot per day

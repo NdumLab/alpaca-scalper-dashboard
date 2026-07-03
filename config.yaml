@@ -66,6 +66,54 @@ pdt:
   max_day_trades_per_5_days: 3
 backtest:
   slippage_cents: 3
+event_risk:
+  enabled: false
+  block_new_entries: true
+  min_impact: high
+  default_pre_minutes: 30
+  default_post_minutes: 15
+  default_action: block_entries
+  planned_events:
+  - name: Employment Situation May 2026
+    time: '2026-06-05T08:30:00-04:00'
+    impact: high
+    symbols:
+    - '*'
+    source: bls-empsit
+  - name: CPI May 2026
+    time: '2026-06-10T08:30:00-04:00'
+    impact: high
+    symbols:
+    - '*'
+    source: bls-cpi
+  - name: PPI May 2026
+    time: '2026-06-11T08:30:00-04:00'
+    impact: high
+    symbols:
+    - '*'
+    source: bls-ppi
+  - name: FOMC decision June 2026
+    time: '2026-06-17T14:00:00-04:00'
+    impact: high
+    symbols:
+    - '*'
+    source: federalreserve-fomc
+market_regime:
+  enabled: false
+  symbols:
+  - SPY
+  - QQQ
+  min_symbols_passing: 2
+  min_bars: 30
+  require_fast_above_slow: true
+  require_close_above_slow: true
+  require_close_above_vwap: false
+  min_atr_pct: 0
+  max_atr_pct: 0
+  regime_strategies:
+    bullish: momentum
+    mixed: block
+    bearish: block
 logging:
   level: INFO
   trade_log: trades.csv

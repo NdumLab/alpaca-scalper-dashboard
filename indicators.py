@@ -144,6 +144,7 @@ class SymbolIndicators:
     prev_ema_slow: float | None = None
     prev_ema_trend: float | None = None
     prev_avg_volume: float | None = None
+    last_close: float | None = None
 
     @classmethod
     def from_config(cls, scfg: dict) -> "SymbolIndicators":
@@ -177,6 +178,7 @@ class SymbolIndicators:
         self.atr.update(bar)
         self.vwap.update(bar)
         self.volumes.append(bar.volume)
+        self.last_close = bar.close
         self.bars_seen += 1
 
     @property

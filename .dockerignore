@@ -15,3 +15,6 @@ bot.log
 bot_state.json
 *.zip
 config.yaml.before-*
+*.pkl
+sweep_rev.json
+optimized_config.yaml

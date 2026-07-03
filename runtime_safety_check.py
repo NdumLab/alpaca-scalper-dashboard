@@ -19,6 +19,8 @@ print(f"max_daily_trades:           {cfg.get('risk', {}).get('max_daily_trades')
 print(f"max_concurrent_positions:   {cfg.get('risk', {}).get('max_concurrent_positions')}")
 print(f"bar_minutes:                {cfg.get('strategy', {}).get('bar_minutes')}")
 print(f"warmup_bars:                {cfg.get('strategy', {}).get('warmup_bars')}")
+print(f"event_risk_enabled:         {cfg.get('event_risk', {}).get('enabled', False)}")
+print(f"market_regime_enabled:      {cfg.get('market_regime', {}).get('enabled', False)}")
 
 print("\nPYTHON FILES:")
 py_files = sorted(Path(".").glob("*.py"))

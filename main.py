@@ -31,6 +31,8 @@ from indicators import Bar, SymbolIndicators
 from strategy import ScalpStrategy
 from risk import RiskManager
 from execution import Executor
+from market_events import EventRisk
+from market_regime import MarketRegime
 
 ET = ZoneInfo("America/New_York")
 RUNTIME_DIR = Path(os.environ.get("RUNTIME_DIR", "runtime"))
@@ -69,6 +71,8 @@ class ScalpBot:
 
         self.symbols = cfg["symbols"]
         self.strategy = ScalpStrategy(cfg)
+        self.event_risk = EventRisk(cfg)
+        self.market_regime = MarketRegime(cfg)
         self.risk = RiskManager(cfg)
         self.executor = Executor(self.trading, cfg)
         self.indicators: dict[str, SymbolIndicators] = {
@@ -120,6 +124,8 @@ class ScalpBot:
             "paused": self.is_paused(),
             "mode": "paper" if self.cfg["alpaca"]["paper"] else "live",
             "symbols": self.symbols,
+            "event_risk": self.event_risk.status(self.now_et()),
+            "market_regime": self.market_regime.status(self.indicators),
         }
         tmp = HEARTBEAT_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -275,8 +281,23 @@ class ScalpBot:
 
         if not self.in_entry_window():
             return
+        active_events = self.event_risk.active_blocks(self.now_et(), symbol)
+        if active_events:
+            names = ", ".join(event.name for event in active_events)
+            log.info("Signal check on %s skipped: planned event block active (%s)", symbol, names)
+            return
+        regime_status = self.market_regime.decision(self.indicators)
+        if not regime_status["allowed"]:
+            log.info("Signal check on %s skipped: market regime gate closed (%s)",
+                     symbol, regime_status)
+            return
 
-        signal = self.strategy.evaluate(symbol, b, ind)
+        signal = self.strategy.evaluate(
+            symbol,
+            b,
+            ind,
+            mode_override=regime_status.get("strategy_mode"),
+        )
         if not signal:
             return
         if symbol in self.open_trades:

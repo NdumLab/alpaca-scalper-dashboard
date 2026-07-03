@@ -32,6 +32,9 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from market_events import EventRisk
+from market_regime import MarketRegime
+
 
 PORT = int(os.environ.get("DASHBOARD_PORT", "8080"))
 CONFIG_PATH = Path(os.environ.get("CONFIG_PATH", "config.yaml"))
@@ -471,6 +474,8 @@ def collect_status() -> dict:
     pnl_summary = build_pnl_summary(journal, positions)
     runtime = load_runtime()
     risk_exposure = build_risk_exposure(account, positions, cfg, runtime, pnl_summary)
+    event_risk = EventRisk(cfg).status(datetime.now(ET))
+    market_regime = runtime.get("heartbeat", {}).get("market_regime") or MarketRegime(cfg).status()
     today = datetime.now(ET).date().isoformat()
     today_orders = [
         order for order in orders
@@ -499,10 +504,14 @@ def collect_status() -> dict:
         "pnl_summary": pnl_summary,
         "runtime": runtime,
         "risk_exposure": risk_exposure,
+        "event_risk": event_risk,
+        "market_regime": market_regime,
         "config": {
             "symbols": cfg.get("symbols", []),
             "risk": cfg.get("risk", {}),
             "strategy": cfg.get("strategy", {}),
+            "event_risk": cfg.get("event_risk", {}),
+            "market_regime": cfg.get("market_regime", {}),
         },
     }
 
@@ -752,6 +761,16 @@ def html_page() -> str:
     <section class="card">
       <h2>Risk Exposure</h2>
       <div id="risk_exposure"></div>
+    </section>
+
+    <section class="card">
+      <h2>Market Events</h2>
+      <div id="event_risk"></div>
+    </section>
+
+    <section class="card">
+      <h2>Market Regime</h2>
+      <div id="market_regime"></div>
     </section>
 
     <section class="card">
@@ -1111,6 +1130,44 @@ async function loadStatus() {
       {label: "Trades today", value: data.risk_exposure.daily_trades_used + " / " + data.risk_exposure.max_daily_trades},
       {label: "Halted", value: data.risk_exposure.halted ? "YES" : "NO"}
     ]);
+
+    document.getElementById("event_risk").innerHTML = keyValueTable([
+      {label: "Enabled", value: data.event_risk.enabled ? "YES" : "NO"},
+      {label: "Block new entries", value: data.event_risk.block_new_entries ? "YES" : "NO"},
+      {label: "Minimum impact", value: data.event_risk.min_impact},
+      {label: "Active blocks", value: (data.event_risk.active || []).map(e => e.name).join(", ") || "-"}
+    ]) + table(
+      [
+        {key: "starts_at", label: "Event time", time: true},
+        {key: "name", label: "Name"},
+        {key: "impact", label: "Impact"},
+        {key: "symbols", label: "Symbols"},
+        {key: "window_start", label: "Block starts", time: true},
+        {key: "window_end", label: "Block ends", time: true}
+      ],
+      (data.event_risk.upcoming || []).map(e => ({
+        ...e,
+        symbols: (e.symbols || []).join(", ")
+      }))
+    );
+
+    const regimeSymbols = data.market_regime.symbols || {};
+    document.getElementById("market_regime").innerHTML = keyValueTable([
+      {label: "Enabled", value: data.market_regime.enabled ? "YES" : "NO"},
+      {label: "Allowed", value: data.market_regime.allowed === false ? "NO" : "YES"},
+      {label: "Passing", value: safe(data.market_regime.passing) + " / " + safe(data.market_regime.required)}
+    ]) + table(
+      [
+        {key: "symbol", label: "Symbol"},
+        {key: "pass", label: "Pass"},
+        {key: "reason", label: "Reason"}
+      ],
+      Object.keys(regimeSymbols).map(sym => ({
+        symbol: sym,
+        pass: regimeSymbols[sym].pass ? "YES" : "NO",
+        reason: regimeSymbols[sym].reason
+      }))
+    );
 
     document.getElementById("today_orders").innerHTML = table(
       [

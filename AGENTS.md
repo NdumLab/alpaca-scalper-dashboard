@@ -14,7 +14,7 @@ When asked to continue Alpaca work:
    - `strategy.mode: momentum`.
    - `strategy.allowed_weekdays: [0, 1, 3, 4]`.
    - `risk_per_trade_pct: 10.0`, `max_position_pct: 180`,
-     `stop_atr_mult: 3.4`, `take_profit_r: 3.0`, `max_daily_trades: 8`.
+     `stop_atr_mult: 3.6`, `take_profit_r: 3.0`, `max_daily_trades: 8`.
    - `backtest.slippage_cents: 3`.
 3. Keep Claude and Codex coordinated through `OPTIMIZATION_LOOP.md`. Before
    ending a session, append a concise handoff note with:
@@ -49,4 +49,3 @@ python3 -m compileall -q .
 docker compose ps
 docker compose logs --tail=80 alpaca-bot
 ```
-

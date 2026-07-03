@@ -14,7 +14,7 @@ Current accepted profile as of 2026-06-14:
 - `strategy.mode: momentum`.
 - `strategy.allowed_weekdays: [0, 1, 3, 4]`.
 - `risk_per_trade_pct: 10.0`, `max_position_pct: 180`,
-  `stop_atr_mult: 3.4`, `take_profit_r: 3.0`, `max_daily_trades: 8`.
+  `stop_atr_mult: 3.6`, `take_profit_r: 3.0`, `max_daily_trades: 8`.
 - `backtest.slippage_cents: 3`.
 
 Do not accept new trading-profile changes without validating full-window,
@@ -26,4 +26,3 @@ the operator explicitly asks for that risk.
 Before assuming the running bot picked up a config change, verify the container
 config with Docker. The EC2 host is the active migration target; the old
 VirtualBox bot should stay stopped unless the operator intentionally rolls back.
-
