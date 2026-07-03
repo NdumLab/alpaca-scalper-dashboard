@@ -24,5 +24,10 @@ unbounded grids and do not increase risk, leverage, or daily trade count unless
 the operator explicitly asks for that risk.
 
 Before assuming the running bot picked up a config change, verify the container
-config with Docker. The EC2 host is the active migration target; the old
-VirtualBox bot should stay stopped unless the operator intentionally rolls back.
+config with Docker.
+
+Active host as of 2026-07-03: the Hostinger VPS (srv1753392) runs the bot,
+dashboard, and weekly health-check timer. The EC2 host is stopped standby for
+rollback (containers stopped, alpaca-weekly-check.timer disabled) — do not
+restart it unless the operator intentionally rolls back. The old VirtualBox
+bot stays stopped. Only one bot may run against the Alpaca account at a time.
