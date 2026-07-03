@@ -58,6 +58,16 @@ else:
 
 # ---- 2. rolling sim health ----
 cfg = yaml.safe_load(open(REPO / "config.yaml"))
+if not CACHE.exists():
+    warn("bar cache missing — sim sections skipped; build it with "
+         "'docker compose run --rm --no-deps -v $PWD:/app alpaca-bot "
+         "python period_breakdown.py 365'")
+    trades_csv = Path(os.environ.get("TRADE_LOG_PATH", RUNTIME / "trades.csv"))
+    n_live = sum(1 for _ in csv.DictReader(trades_csv.open())) if trades_csv.exists() else 0
+    print(f"\nLive paper trades logged: {n_live} (no sim comparison without cache)")
+    print("\n" + "=" * 78)
+    print(f"Result: {len(warns)} WARNING(S) above")
+    raise SystemExit(0)
 blob = pickle.load(CACHE.open("rb"))
 events = blob["events"]
 data_end = events[-1][0].astimezone(ET)

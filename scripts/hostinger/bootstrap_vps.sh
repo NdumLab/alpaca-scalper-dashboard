@@ -11,6 +11,18 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_DIR"
 
+echo "== 0/5 Swap (OOM insurance for the weekly report) =="
+if [[ "$(swapon --show --noheadings | wc -l)" -eq 0 ]]; then
+  fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  echo "Added 2G swapfile."
+else
+  echo "Swap already active."
+fi
+
 echo "== 1/5 Docker =="
 bash scripts/aws/bootstrap_ec2.sh   # OS-detecting installer (ubuntu/debian/amzn)
 
